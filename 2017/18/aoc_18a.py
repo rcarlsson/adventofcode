@@ -38,8 +38,12 @@ def execute_line(line, registers, address):
             address = -2
 
     elif oper == 'jgz':
-        if registers[reg] != 0:
-            address += val - 1
+        try:
+            condition = int(reg)
+        except ValueError:
+            condition = registers[reg]
+        if condition > 0:
+            address = val - 1
 
     return address
 
