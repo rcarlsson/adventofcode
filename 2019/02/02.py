@@ -1,35 +1,39 @@
 import sys
+import operator
 
 file_name = sys.argv[1]
 
-lines = [line.rstrip('\n') for line in open(file_name)]
+init_prog = [int(x) for x in open(file_name).read().split(',')]
 
-data = [int(x) for x in lines[0].split(',')]
+oper = {}
+oper[1] = operator.add
+oper[2] = operator.mul
 
-data[1] = 12
-data[2] = 2
+def execute(program):
+    ip = 0
+    while program[ip] != 99 and ip >= 0 and ip < len(program):
+        opcode = program[ip]
+        (a1, a2, a3) = program[ip+1 : ip+4]
+        program[a3] = oper[opcode](program[a1], program[a2])
+        ip += 4
 
-for x in range(0, len(data), 4):
-    op = data[x]
-    if op == 99:
-        break
+    return program[0]
 
-    addr1 = data[x+1]
-    addr2 = data[x+2]
-    res_addr = data[x+3]
+program = init_prog[:]
+program[1] = 12
+program[2] = 2
+print("Part 1: {}".format(execute(program)))
 
-    if op == 1:
-        data[res_addr] = data[addr1] + data[addr2]
-    elif op == 2:
-        data[res_addr] = data[addr1] * data[addr2]
+noun = 0
+verb = 0
+for x in range(100):
+    for y in range(100):
+        program = init_prog[:]
+        program[1] = x
+        program[2] = y
+        if (execute(program) == 19690720):
+            noun = x
+            verb = y
+            break
 
-print("Part 1: {}".format(data[0]))
-
-#  0, 0 -> 29848
-# +1, 0 -> +307200
-#  0,+1 -> +1
-# wanted result = 19690720
-x = 19690720 - 29848
-verb = x % 307200
-noun = (x-verb) / 307200
 print("Part 2: {}".format(100*noun + verb))
