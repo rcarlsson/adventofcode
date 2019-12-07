@@ -1,7 +1,5 @@
 import sys
 import os
-import operator
-import math
 
 file_name = ''
 
