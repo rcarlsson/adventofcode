@@ -26,16 +26,18 @@ for obj in objects:
 
 print("Part 1: {}".format(count))
 
-you = set()
-obj = "YOU"
+path = set()
+obj = objects["YOU"]
 while obj in objects:
-    you.add(obj)
+    path.add(obj)
     obj = objects[obj]
 
-san = set()
-obj = "SAN"
+obj = objects["SAN"]
 while obj in objects:
-    san.add(obj)
+    if obj in path:
+        path.remove(obj)
+    else:
+        path.add(obj)
     obj = objects[obj]
 
-print("Part 2: {}".format(len(you.difference(san))+len(san.difference(you))-2))
+print("Part 2: {}".format(len(path)))

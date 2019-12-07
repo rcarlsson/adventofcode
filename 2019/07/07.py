@@ -14,6 +14,7 @@ else:
 init_prog = [int(x) for x in open(file_name).read().split(',')]
 
 def execute(program, ip, inp):
+    out = None
     while program[ip] != 99 and ip >= 0 and ip < len(program):
         op = program[ip] % 100
         m1 = (program[ip] // 100) % 10
@@ -36,7 +37,8 @@ def execute(program, ip, inp):
             ip += 2
         elif op == 4:
             ip += 2
-            return (program, ip, inp, program[p1])
+            out = program[p1]
+            break
         elif op == 5:
             ip = program[p2] if program[p1] != 0 else ip+3
         elif op == 6:
@@ -48,7 +50,7 @@ def execute(program, ip, inp):
             program[p3] = 1 if program[p1] == program[p2] else 0
             ip += 4
 
-    return (program, ip, inp, None)
+    return (program, ip, inp, out)
 
 res1 = 0
 for p in permutations([0,1,2,3,4]):
