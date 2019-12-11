@@ -11,24 +11,15 @@ if len(sys.argv) > 1:
 
 init_prog = [int(x) for x in open(file_name).read().split(',')]
 
-program = init_prog[:]
-ip = 0
-res1 = 0
-while True:
-    (tmp_res, ip, _) = intcode.run(program, [1], ip)
-    if tmp_res is None:
-        break
-    else:
-        res1 = tmp_res
-print("Part 1: {}".format(res1))
+def get_last_out(program, inp):
+    ip = 0
+    out = 0
+    while True:
+        (res, ip, _) = intcode.run(program, [inp], ip)
+        if res is None:
+            return out
+        else:
+            out = res
 
-program = init_prog[:]
-ip = 0
-res2 = 0
-while True:
-    (tmp_res, ip, _) = intcode.run(program, [5], ip)
-    if tmp_res is None:
-        break
-    else:
-        res2 = tmp_res
-print("Part 2: {}".format(res2))
+print("Part 1: {}".format(get_last_out(init_prog[:], 1)))
+print("Part 2: {}".format(get_last_out(init_prog[:], 5)))
