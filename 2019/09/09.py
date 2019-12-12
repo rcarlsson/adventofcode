@@ -3,14 +3,18 @@ import os
 from itertools import permutations
 
 sys.path.append('../')
-import intcode
+from intcode import *
 
 file_name = os.path.realpath(__file__).rsplit('/',1)[0]+'/input'
 
 if len(sys.argv) > 1:
     file_name = sys.argv[1]
 
-init_prog = [int(x) for x in open(file_name).read().split(',')]
+program = [int(x) for x in open(file_name).read().split(',')]
 
-print("Part 1: {}".format(intcode.run(init_prog[:], [1])[0]))
-print("Part 2: {}".format(intcode.run(init_prog[:], [2])[0]))
+c = IntCode(program,[1])
+c.run()
+print("Part 1: {}".format(c.get_out()[0]))
+c = IntCode(program,[2])
+c.run()
+print("Part 2: {}".format(c.get_out()[0]))

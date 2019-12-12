@@ -3,20 +3,22 @@ import os
 from itertools import permutations
 
 sys.path.append('../')
-import intcode
+from intcode import *
 
 file_name = os.path.realpath(__file__).rsplit('/',1)[0]+'/input'
 
 if len(sys.argv) > 1:
     file_name = sys.argv[1]
 
-init_prog = [int(x) for x in open(file_name).read().split(',')]
+program = [int(x) for x in open(file_name).read().split(',')]
 
 res1 = 0
 for p in permutations([0,1,2,3,4]):
     res = 0
     for i in range(5):
-        res = intcode.run(init_prog[:], [p[i], res])[0]
+        c = IntCode(program, [p[i], res])
+        c.run()
+        res = c.get_out()[0]
 
     res1 = max(res1, res)
 
@@ -24,16 +26,14 @@ print("Part 1: {}".format(res1))
 
 res2 = 0
 for p in permutations([5,6,7,8,9]):
-    res = 0
-    tmp_res = 0
-    prog = [init_prog[:] for _ in range(5)]
-    ip = [0 for _ in range(5)]
-    inp = [[p[i]] for i in range(5)]
-    while tmp_res is not None:
-        for i in range(5):
-            inp[i].append(res)
-            (tmp_res, ip[i], _) = intcode.run(prog[i], inp[i], ip[i])
-            res = res if tmp_res is None else tmp_res
-    res2 = max(res2, res)
+    amps = [IntCode(program, [x]) for x in p]
+    amps[0].give_inp(0)
+    i = 0
+    while amps[i].run() != Result.HALT:
+        i_next = (i+1)%len(p)
+        amps[i_next].give_inp(amps[i].get_out()[-1])
+        i = i_next
+
+    res2 = max(res2, amps[-1].get_out()[-1])
 
 print("Part 2: {}".format(res2))
