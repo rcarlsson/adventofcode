@@ -1,135 +1,95 @@
-import time
+import sys
 
-start_time = time.time()
+depth = 5616
+target = 10 + 785j
 
-#depth: 5616
-#target: 10,785
+er = {}
+for x in range(0,int(target.real)+1):
+    er[x] = (x*16807 + depth) % 20183
 
-depth = 5616#510
+for y in range(0,int(target.imag)+1):
+    er[y*1j] = (y*48271 + depth) % 20183
 
-xm = 0
-ym = 0
-mouth = (xm,ym)
-xt = 10
-yt = 785#10
-target = (xt,yt)
-cave = {mouth: 0, target: 0}
-geo_idx = 0
-erosion_lvl = 0
+er[0] = 0
+er[target] = (0 + depth) % 20183
 
-ans1 = 0
-extx = 120
-exty = 20
-#100 50: [2000, 1062, 1063]
-for x in range(xm,xt+extx):
-    for y in range(ym,yt+exty):
-        if (x,y) not in cave:
-            if y == 0:
-                geo_idx = 16807*x
-            elif x == 0:
-                geo_idx = 48271*y
-            else:
-                geo_idx = cave[(x-1,y)] * cave[(x,y-1)]
-            erosion_lvl = (geo_idx + depth) % 20183
-            cave[(x,y)] = erosion_lvl
-            if x <= xt and y <= yt:
-                ans1 += erosion_lvl % 3
+for x in range(1,int(target.real)+1):
+    for y in range(1,int(target.imag)+1):
+        c = x + 1j*y
+        if c not in er:
+            er[c] = (er[c-1]*er[c-1j] + depth) % 20183
 
-gear = {0: {1,2}, 1: {0,2}, 2: {0,1}}
-r = {}
-for x in range(xm,xt+extx):
-    for y in range(ym,yt+exty):
-        cave[(x,y)] = cave[(x,y)] % 3        
-        r[(x,y)] = {}
-        for g in gear[cave[(x,y)]]:
-            r[(x,y)][g] = 2000
+print(sum([er[c]%3 for c in er]))
 
+# 0 = nothing, 1 = torch, 2 = climbing gear
+# rocky -> cl.gr/torch
+# wet -> cl.gr/neither
+# narrow -> torch/neither
 
-def calc(t1, t2, g):
-    if g not in gear[t2]:
-        return -1,-1
-    if t1 == 0 and t2 == 1 or t1 == 1 and t2 == 0:
-        if g == 2:
-            return g,1
-        else:
-            return 2,8
-    elif t1 == 0 and t2 == 2 or t1 == 2 and t2 == 0:
-        if g == 1:
-            return g,1
-        else:
-            return g,8
-    elif t1 == 1 and t2 == 2 or t1 == 2 and t2 == 1:
-        if g == 0:
-            return g,1
-        else:
-            return g,8
+# move -> 1 minute
+# switch gear -> 7 minutes
+# switch to torch at target
+
+allowed_tools = {0: [1,2], 1: [2,0], 2: [1,0]}
+
+def extend_er(p):
+    global er
+    x = int(p.real)
+    y = int(p.imag)
+    if p-1 in er:
+        er[x] = (x*16807 + depth) % 20183
+        p = x + 1j
+        while p-1 in er:
+            er[p] = (er[p-1]*er[p-1j] + depth) % 20183
+            p += 1j
     else:
-        return g,1
+        er[y*1j] = (y*48271 + depth) % 20183
+        p = 1 + y*1j
+        while p-1j in er:
+            er[p] = (er[p-1]*er[p-1j] + depth) % 20183
+            p += 1
 
 
-def update(x,y):
-    global r
+d = {}
+d[(0,1)] = 0
+def update_adj(pos, tool):
+    global d
+    adj_pos = [pos-1, pos-1j, pos+1, pos+1j]
+    updated = set()
+    for p in adj_pos:
+        if p.real < 0 or p.imag < 0:
+            continue
+        if p not in er:
+            extend_er(p)
+        if tool not in allowed_tools[er[p]%3]:
+            continue
+        if (p,tool) not in d or d[(pos,tool)]+1 < d[(p,tool)]:
+            d[(p,tool)] = d[(pos,tool)]+1
+            updated.add((p,tool))
 
-    u = set()
+    for t in allowed_tools[er[pos]%3]:
+        if t == tool:
+            continue
+        if (pos,t) not in d or d[(pos,tool)]+7 < d[(pos,t)]:
+            d[(pos,t)] = d[(pos,tool)]+7
+            updated.add((pos,t))
 
-    for xn,yn in [(x-1,y),(x,y-1),(x+1,y),(x,y+1)]:
-        if (xn >= 0 and yn >= 0 and
-            xn < xt+extx and yn < yt+exty):
-            tl = [2000,2000,2000]
-            gn = set()
-            for gs in r[(x,y)]['g']:
-                g,t = calc(cave[(x,y)],cave[(xn,yn)],gs)
-                if g != -1 and t != -1:
-                    t += r[(x,y)]['t'][gs]
-                    tl[g] = min(tl[g],t)
-                    gn.add(g)
+    if (target,1) in updated:
+        print(d[(target,1)])
+    return updated
 
-            c = cave[(xn,yn)]
-            if c == 0:
-                tl[1] = min(tl[1],tl[2]+7)
-                tl[2] = min(tl[1]+7,tl[2])
-            elif c == 1:
-                tl[0] = min(tl[0],tl[2]+7)
-                tl[2] = min(tl[0]+7,tl[2])
-            else:
-                tl[0] = min(tl[0],tl[1]+7)
-                tl[1] = min(tl[0]+7,tl[1])
+d = {}
+d[(0,1)] = 0
+d[(target,1)] = sys.maxsize
+x = set()
+x.add((0,1))
+while x:
+    (pos,tool) = sorted(x, key=lambda i: d[i])[0]
+    x.remove((pos,tool))
+    diff = target-pos
+    diff_manhattan = (int(abs(diff.real) + abs(diff.imag)))
+    if d[(pos,tool)] + diff_manhattan < d[(target,1)]:
+        x = x.union(update_adj(pos,tool))
+        print(len(x))
 
-            if (xn,yn) not in r:
-                r[(xn,yn)] = {'g': gear[cave[(xn,yn)]], 't': tl}
-                u.add((xn,yn))
-            else:
-                for i in range(3):
-                    if tl[i] < r[(xn,yn)]['t'][i]:
-                        if tl[i] < min(r[target]['t'])+7:
-                            r[(xn,yn)]['g'].add(i)
-                            r[(xn,yn)]['t'][i] = tl[i]
-                            u.add((xn,yn))
-
-    return u
-
-r = {mouth: {'t': [2000,0,7], 'g': {1,2}}, target: {'t': [2000,2000,2000], 'g': {1,2}}}
-u = {mouth}
-def solve(u):
-    while u:
-        u2 = set()
-        for c in u:
-            x,y = c
-            u2 = u2 | update(x,y)
-        u = u2
-        print(len(u))
-
-x_min = 2000
-y_min = 2000
-for y in range(yt+exty):
-    if min(r[(xt+extx-1,y)]['t']) < x_min:
-        x_min = min(r[(xt+extx-1,y)]['t']) + abs(yt - y) + extx
-for x in range(xt+extx):
-    if min(r[(x,yt+exty-1)]['t']) < y_min:
-        y_min = min(r[(x,yt+exty-1)]['t']) + abs(xt - x) + exty
-print('{}, {}'.format(x_min,y_min))
-
-ans2 = r[target]['t']
-print('Part 1: {}'.format(ans1))
-print('Part 2: {}'.format(ans2))
-print('Time: {}'.format(time.time() - start_time))
+print(d[target,1])
