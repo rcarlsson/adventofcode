@@ -26,7 +26,7 @@ def bot(prog, panels):
 print("Part 1: {}".format(len(bot(program,{}))))
 
 panels = bot(program,{0: 1})
-xl,yl = zip(*[(int(c.real),int(c.imag)) for c in panels.keys()])
+xl,yl = zip(*[(int(c.real),int(c.imag)) for c in panels])
 print("Part 2:")
 for y in range(min(yl),max(yl)+1):
     print(''.join(['#' if panels.get(x+y*1j, 0) == 1 else ' ' for x in range(min(xl),max(xl)+1)]))

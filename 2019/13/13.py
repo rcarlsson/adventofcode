@@ -20,7 +20,7 @@ grid = {}
 score = 0
 
 def get_state(grid):
-    for key in grid.keys():
+    for key in grid:
         if grid[key] == 3:
             paddle = key
         if grid[key] == 4:

@@ -59,7 +59,7 @@ for asteroid in asteroids:
 
 rm_count = 0
 while angles:
-    for angle in sorted(angles.keys()):
+    for angle in sorted(angles):
         if angles[angle]:
             asteroid = angles[angle].pop(0)
             rm_count += 1
